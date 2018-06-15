@@ -4,10 +4,30 @@ Kubernetes components are stateless and store cluster state in [etcd](https://gi
 
 ## Prerequisites
 
-The commands in this lab must be run on each controller instance: `controller-0`, `controller-1`, and `controller-2`. Login to each controller instance using the `gcloud` command. Example:
+The commands in this lab must be run on each controller instance: `ip-10-240-0-10`, `ip-10-240-0-11`, and `ip-10-240-0-12`. Login to each controller instance using `ssh`:
 
 ```
-gcloud compute ssh controller-0
+CONTROLLER_0_PUBLIC_IP_ADDRESS=$(aws ec2 describe-instances \
+  --filters "Name=tag:Name,Values=ip-10-240-0-10" "Name=instance-state-name,Values=running" | \
+  jq -j '.Reservations[].Instances[].PublicIpAddress')
+    
+ssh ubuntu@${CONTROLLER_0_PUBLIC_IP_ADDRESS}
+```
+
+```
+CONTROLLER_1_PUBLIC_IP_ADDRESS=$(aws ec2 describe-instances \
+  --filters "Name=tag:Name,Values=ip-10-240-0-11" "Name=instance-state-name,Values=running" | \
+  jq -j '.Reservations[].Instances[].PublicIpAddress')
+
+ssh ubuntu@${CONTROLLER_1_PUBLIC_IP_ADDRESS}
+```
+
+```
+CONTROLLER_2_PUBLIC_IP_ADDRESS=$(aws ec2 describe-instances \
+  --filters "Name=tag:Name,Values=ip-10-240-0-12" "Name=instance-state-name,Values=running" | \
+  jq -j '.Reservations[].Instances[].PublicIpAddress')
+    
+ssh ubuntu@${CONTROLLER_2_PUBLIC_IP_ADDRESS}
 ```
 
 ### Running commands in parallel with tmux
@@ -46,8 +66,7 @@ Extract and install the `etcd` server and the `etcdctl` command line utility:
 The instance internal IP address will be used to serve client requests and communicate with etcd cluster peers. Retrieve the internal IP address for the current compute instance:
 
 ```
-INTERNAL_IP=$(curl -s -H "Metadata-Flavor: Google" \
-  http://metadata.google.internal/computeMetadata/v1/instance/network-interfaces/0/ip)
+INTERNAL_IP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
 ```
 
 Each etcd member must have a unique name within an etcd cluster. Set the etcd name to match the hostname of the current compute instance:
@@ -80,7 +99,7 @@ ExecStart=/usr/local/bin/etcd \\
   --listen-client-urls https://${INTERNAL_IP}:2379,https://127.0.0.1:2379 \\
   --advertise-client-urls https://${INTERNAL_IP}:2379 \\
   --initial-cluster-token etcd-cluster-0 \\
-  --initial-cluster controller-0=https://10.240.0.10:2380,controller-1=https://10.240.0.11:2380,controller-2=https://10.240.0.12:2380 \\
+  --initial-cluster ip-10-240-0-10=https://10.240.0.10:2380,ip-10-240-0-11=https://10.240.0.11:2380,ip-10-240-0-12=https://10.240.0.12:2380 \\
   --initial-cluster-state new \\
   --data-dir=/var/lib/etcd
 Restart=on-failure
@@ -101,7 +120,7 @@ EOF
 }
 ```
 
-> Remember to run the above commands on each controller node: `controller-0`, `controller-1`, and `controller-2`.
+> Remember to run the above commands on each controller node: `ip-10-240-0-10`, `ip-10-240-0-11`, and `ip-10-240-0-12`.
 
 ## Verification
 
@@ -118,9 +137,9 @@ sudo ETCDCTL_API=3 etcdctl member list \
 > output
 
 ```
-3a57933972cb5131, started, controller-2, https://10.240.0.12:2380, https://10.240.0.12:2379
-f98dc20bce6225a0, started, controller-0, https://10.240.0.10:2380, https://10.240.0.10:2379
-ffed16798470cab5, started, controller-1, https://10.240.0.11:2380, https://10.240.0.11:2379
+3a57933972cb5131, started, ip-10-240-0-12, https://10.240.0.12:2380, https://10.240.0.12:2379
+f98dc20bce6225a0, started, ip-10-240-0-10, https://10.240.0.10:2380, https://10.240.0.10:2379
+ffed16798470cab5, started, ip-10-240-0-11, https://10.240.0.11:2380, https://10.240.0.11:2379
 ```
 
 Next: [Bootstrapping the Kubernetes Control Plane](08-bootstrapping-kubernetes-controllers.md)
