@@ -1,6 +1,8 @@
 # AWS Kubernetes The Hard Way
 
-This fork is a modified version of Kelsey Hightower's [Kubernetes The Hard Way](https://github.com/kelseyhightower/kubernetes-the-hard-way) for making a Kubernetes cluster on AWS. Kelsey's original guide focuses on GCP. The original will be more regularly updated so this fork is only intended to be a convenient reference of AWS specific commands. 
+This fork is a modified version of Kelsey Hightower's [Kubernetes The Hard Way](https://github.com/kelseyhightower/kubernetes-the-hard-way) for making a Kubernetes cluster on AWS. Kelsey's original guide focuses on GCP. The original will be more regularly updated so this fork is only intended to be a convenient reference of AWS-specific commands. 
+
+The commands are based on Kelsey's original AWS version of the tutorial, but they have been tweaked and made to fit a more recent version of his guide.
 
 <hr />
 
