@@ -157,7 +157,7 @@ aws ec2 authorize-security-group-ingress \
   --cidr 0.0.0.0/0
 ```
 
-> An [external load balancer](https://cloud.google.com/compute/docs/load-balancing/network/) will be used to expose the Kubernetes API Servers to remote clients.
+> An [elastic load balancer](https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/introduction.html) will be used to expose the Kubernetes API Servers to remote clients.
 
 List the firewall rules in the `kubernetes-the-hard-way` VPC network:
 
@@ -254,7 +254,7 @@ aws iam add-role-to-instance-profile \
 
 ### Chosing an Image
 
-Use the [Ubuntu Amazon EC2 AMI Locator](https://cloud-images.ubuntu.com/locator/ec2/) to find the right image-id for your zone. This guide assumes the `us-west-2` zone.
+Use the [Ubuntu Amazon EC2 AMI Locator](https://cloud-images.ubuntu.com/locator/ec2/) to find the right image-id for your region. This guide assumes the `us-west-2` region.
 
 ```
 IMAGE_ID="ami-04f8bb7c"

@@ -1,48 +1,32 @@
 # Prerequisites
 
-## Google Cloud Platform
+## Amazon Web Services
 
-This tutorial leverages the [Google Cloud Platform](https://cloud.google.com/) to streamline provisioning of the compute infrastructure required to bootstrap a Kubernetes cluster from the ground up. [Sign up](https://cloud.google.com/free/) for $300 in free credits.
+This tutorial leverages [Amazon Web Services](https://aws.amazon.com/) to streamline provisioning of the compute infrastructure required to bootstrap a Kubernetes cluster from the ground up. 
 
-[Estimated cost](https://cloud.google.com/products/calculator/#id=78df6ced-9c50-48f8-a670-bc5003f2ddaa) to run this tutorial: $0.22 per hour ($5.39 per day).
+## AWS CLI
 
-> The compute resources required for this tutorial exceed the Google Cloud Platform free tier.
+### Install the AWS CLI
 
-## Google Cloud Platform SDK
-
-### Install the Google Cloud SDK
-
-Follow the Google Cloud SDK [documentation](https://cloud.google.com/sdk/) to install and configure the `gcloud` command line utility.
-
-Verify the Google Cloud SDK version is 200.0.0 or higher:
-
-```
-gcloud version
-```
+Follow the AWS CLI [documentation](https://aws.amazon.com/cli/) to install and configure the `aws` command line utility.
 
 ### Set a Default Compute Region and Zone
 
-This tutorial assumes a default compute region and zone have been configured.
+This tutorial assumes a default region has been configured.
 
-If you are using the `gcloud` command-line tool for the first time `init` is the easiest way to do this:
-
-```
-gcloud init
-```
-
-Otherwise set a default compute region:
+If you are using the `aws` command-line tool for the first time `configure` is the easiest way to do this:
 
 ```
-gcloud config set compute/region us-west1
+aws configure
 ```
 
-Set a default compute zone:
+Otherwise set a default region:
 
 ```
-gcloud config set compute/zone us-west1-c
+aws configure set default.region us-west-2
 ```
 
-> Use the `gcloud compute zones list` command to view additional regions and zones.
+> Use the `aws ec2 describe-regions` command to view additional regions.
 
 ## Running Commands in Parallel with tmux
 
