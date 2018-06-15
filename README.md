@@ -1,4 +1,8 @@
-# Kubernetes The Hard Way
+# AWS Kubernetes The Hard Way
+
+This fork is a modified version of Kelsey Hightower's [Kubernetes The Hard Way](https://github.com/kelseyhightower/kubernetes-the-hard-way) for making a Kubernetes cluster on AWS. Kelsey's original guide focuses on GCP. The original will be more regularly updated so this fork is only intended to be a convenient reference of AWS specific commands. 
+
+<hr />
 
 This tutorial walks you through setting up Kubernetes the hard way. This guide is not for people looking for a fully automated command to bring up a Kubernetes cluster. If that's you then check out [Google Kubernetes Engine](https://cloud.google.com/kubernetes-engine), or the [Getting Started Guides](http://kubernetes.io/docs/getting-started-guides/).
 
@@ -22,7 +26,7 @@ Kubernetes The Hard Way guides you through bootstrapping a highly available Kube
 
 ## Labs
 
-This tutorial assumes you have access to the [Google Cloud Platform](https://cloud.google.com). While GCP is used for basic infrastructure requirements the lessons learned in this tutorial can be applied to other platforms.
+This tutorial assumes you have access to [Amazon Web Services](/https://aws.amazon.com/). While AWS is used for basic infrastructure requirements the lessons learned in this tutorial can be applied to other platforms.
 
 * [Prerequisites](docs/01-prerequisites.md)
 * [Installing the Client Tools](docs/02-client-tools.md)
