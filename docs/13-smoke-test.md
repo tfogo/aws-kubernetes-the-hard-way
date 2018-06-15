@@ -177,16 +177,23 @@ NODE_PORT=$(kubectl get svc nginx \
 Create a firewall rule that allows remote access to the `nginx` node port:
 
 ```
-gcloud compute firewall-rules create kubernetes-the-hard-way-allow-nginx-service \
-  --allow=tcp:${NODE_PORT} \
-  --network kubernetes-the-hard-way
+SECURITY_GROUP_ID=$(aws ec2 describe-security-groups \
+  --filters "Name=tag:Name,Values=kubernetes" | \
+  jq -j '.SecurityGroups[].GroupId')
+
+aws ec2 authorize-security-group-ingress \
+  --group-id ${SECURITY_GROUP_ID} \
+  --protocol tcp \
+  --port ${NODE_PORT} \
+  --cidr 0.0.0.0/0
 ```
 
 Retrieve the external IP address of a worker instance:
 
 ```
-EXTERNAL_IP=$(gcloud compute instances describe worker-0 \
-  --format 'value(networkInterfaces[0].accessConfigs[0].natIP)')
+EXTERNAL_IP=$(aws ec2 describe-instances \
+  --filters "Name=tag:Name,Values=ip-10-240-0-20" | \
+  jq -j '.Reservations[].Instances[].PublicIpAddress')
 ```
 
 Make an HTTP request using the external IP address and the `nginx` node port:
@@ -256,7 +263,11 @@ INSTANCE_NAME=$(kubectl get pod untrusted --output=jsonpath='{.spec.nodeName}')
 SSH into the worker node:
 
 ```
-gcloud compute ssh ${INSTANCE_NAME}
+INSTANCE_IP=$(aws ec2 describe-instances \
+  --filters "Name=tag:Name,Values=${INSTANCE_NAME}" | \
+  jq -j '.Reservations[].Instances[].PublicIpAddress')
+
+ssh ubuntu@${INSTANCE_IP}
 ```
 
 List the containers running under gVisor:
