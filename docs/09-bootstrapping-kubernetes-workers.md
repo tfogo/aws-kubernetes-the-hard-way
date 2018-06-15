@@ -4,10 +4,30 @@ In this lab you will bootstrap three Kubernetes worker nodes. The following comp
 
 ## Prerequisites
 
-The commands in this lab must be run on each worker instance: `worker-0`, `worker-1`, and `worker-2`. Login to each worker instance using the `gcloud` command. Example:
+The commands in this lab must be run on each worker instance: `ip-10-240-0-20`, `ip-10-240-0-21`, and `ip-10-240-0-22`. Login to each worker instance using `ssh`:
 
 ```
-gcloud compute ssh worker-0
+WORKER_0_PUBLIC_IP_ADDRESS=$(aws ec2 describe-instances \
+  --filters "Name=tag:Name,Values=ip-10-240-0-20" "Name=instance-state-name,Values=running" | \
+  jq -j '.Reservations[].Instances[].PublicIpAddress')
+    
+ssh ubuntu@${WORKER_0_PUBLIC_IP_ADDRESS}
+```
+
+```
+WORKER_1_PUBLIC_IP_ADDRESS=$(aws ec2 describe-instances \
+  --filters "Name=tag:Name,Values=ip-10-240-0-21" "Name=instance-state-name,Values=running" | \
+  jq -j '.Reservations[].Instances[].PublicIpAddress')
+
+ssh ubuntu@${WORKER_1_PUBLIC_IP_ADDRESS}
+```
+
+```
+WORKER_2_PUBLIC_IP_ADDRESS=$(aws ec2 describe-instances \
+  --filters "Name=tag:Name,Values=ip-10-240-0-22" "Name=instance-state-name,Values=running" | \
+  jq -j '.Reservations[].Instances[].PublicIpAddress')
+    
+ssh ubuntu@${WORKER_2_PUBLIC_IP_ADDRESS}
 ```
 
 ### Running commands in parallel with tmux
@@ -71,8 +91,7 @@ Install the worker binaries:
 Retrieve the Pod CIDR range for the current compute instance:
 
 ```
-POD_CIDR=$(curl -s -H "Metadata-Flavor: Google" \
-  http://metadata.google.internal/computeMetadata/v1/instance/attributes/pod-cidr)
+POD_CIDR=$(curl -s http://169.254.169.254/latest/user-data)
 ```
 
 Create the `bridge` network configuration file:
@@ -271,7 +290,7 @@ EOF
 }
 ```
 
-> Remember to run the above commands on each worker node: `worker-0`, `worker-1`, and `worker-2`.
+> Remember to run the above commands on each worker node: `ip-10-240-0-20`, `ip-10-240-0-21`, and `ip-10-240-0-22`.
 
 ## Verification
 
@@ -280,17 +299,16 @@ EOF
 List the registered Kubernetes nodes:
 
 ```
-gcloud compute ssh controller-0 \
-  --command "kubectl get nodes --kubeconfig admin.kubeconfig"
+ssh ubuntu@${CONTROLLER_0_PUBLIC_IP_ADDRESS} "kubectl get nodes --kubeconfig admin.kubeconfig"
 ```
 
 > output
 
 ```
-NAME       STATUS    ROLES     AGE       VERSION
-worker-0   Ready     <none>    20s       v1.10.2
-worker-1   Ready     <none>    20s       v1.10.2
-worker-2   Ready     <none>    20s       v1.10.2
+NAME             STATUS    ROLES     AGE       VERSION
+ip-10-240-0-20   Ready     <none>    20s       v1.10.2
+ip-10-240-0-21   Ready     <none>    20s       v1.10.2
+ip-10-240-0-22   Ready     <none>    20s       v1.10.2
 ```
 
 Next: [Configuring kubectl for Remote Access](10-configuring-kubectl.md)

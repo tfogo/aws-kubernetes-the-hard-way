@@ -350,7 +350,7 @@ aws ec2 create-tags \
 
 ### Kubernetes Workers
 
-Each worker instance requires a pod subnet allocation from the Kubernetes cluster CIDR range. The pod subnet allocation will be used to configure container networking in a later exercise. The `pod-cidr` instance metadata will be used to expose pod subnet allocations to compute instances at runtime.
+Each worker instance requires a pod subnet allocation from the Kubernetes cluster CIDR range. The pod subnet allocation will be used to configure container networking in a later exercise. The `user-data` instance metadata will be used to expose pod subnet allocations to compute instances at runtime.
 
 > The Kubernetes cluster CIDR range is defined by the Controller Manager's `--cluster-cidr` flag. In this tutorial the cluster CIDR range will be set to `10.200.0.0/16`, which supports 254 subnets.
 
@@ -366,6 +366,7 @@ WORKER_0_INSTANCE_ID=$(aws ec2 run-instances \
   --security-group-ids ${SECURITY_GROUP_ID} \
   --instance-type t2.small \
   --private-ip-address 10.240.0.20 \
+  --user-data 10.200.0.0/24 \
   --subnet-id ${SUBNET_ID} | \
   jq -r '.Instances[].InstanceId')
 
@@ -386,6 +387,7 @@ WORKER_1_INSTANCE_ID=$(aws ec2 run-instances \
   --security-group-ids ${SECURITY_GROUP_ID} \
   --instance-type t2.small \
   --private-ip-address 10.240.0.21 \
+  --user-data 10.200.1.0/24 \
   --subnet-id ${SUBNET_ID} | \
   jq -r '.Instances[].InstanceId')
 
@@ -406,6 +408,7 @@ WORKER_2_INSTANCE_ID=$(aws ec2 run-instances \
   --security-group-ids ${SECURITY_GROUP_ID} \
   --instance-type t2.small \
   --private-ip-address 10.240.0.22 \
+  --user-data 10.200.2.0/24 \
   --subnet-id ${SUBNET_ID} | \
   jq -r '.Instances[].InstanceId')
 
