@@ -1,5 +1,9 @@
 # Provisioning Compute Resources
 
+> **Note:** The main difference from the upstream guide is that the compute resources will be created with the default AWS hostnames `ip-10-240-0-10`, `ip-10-240-0-22` etc. In GCP you can set custom hostnames during provisioning to `controller-0`, `worker-2` etc. You can manually change the hostname of each instance after provisioning to something more descriptive. This tutorial will just stick to the default AWS hostnames. 
+
+<hr />
+
 Kubernetes requires a set of machines to host the Kubernetes control plane and the worker nodes where containers are ultimately run. In this lab you will provision the compute resources required for running a secure and highly available Kubernetes cluster across a single [compute zone](https://cloud.google.com/compute/docs/regions-zones/regions-zones).
 
 > Ensure a default compute zone and region have been set as described in the [Prerequisites](01-prerequisites.md#set-a-default-compute-region-and-zone) lab.
