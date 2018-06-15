@@ -339,15 +339,15 @@ aws elb register-instances-with-load-balancer \
 Note, if you don't have the `CONTROLLER_0_INSTANCE_ID` variables set, you can retrieve the instance IDs again with these commands:
 
 ```
-CONTROLLER_0_PUBLIC_IP_ADDRESS=$(aws ec2 describe-instances \
+CONTROLLER_0_INSTANCE_ID=$(aws ec2 describe-instances \
   --filters "Name=tag:Name,Values=ip-10-240-0-10" | \
   jq -j '.Reservations[].Instances[].InstanceId')
   
-CONTROLLER_1_PUBLIC_IP_ADDRESS=$(aws ec2 describe-instances \
+CONTROLLER_1_INSTANCE_ID=$(aws ec2 describe-instances \
     --filters "Name=tag:Name,Values=ip-10-240-0-11" | \
     jq -j '.Reservations[].Instances[].InstanceId')
 
-CONTROLLER_2_PUBLIC_IP_ADDRESS=$(aws ec2 describe-instances \
+CONTROLLER_2_INSTANCE_ID=$(aws ec2 describe-instances \
   --filters "Name=tag:Name,Values=ip-10-240-0-12" | \
   jq -j '.Reservations[].Instances[].InstanceId')
 ```

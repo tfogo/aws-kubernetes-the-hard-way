@@ -13,9 +13,19 @@ In this section you will gather the information required to create routes in the
 Print the internal IP address and Pod CIDR range for each worker instance:
 
 ```
-for instance in worker-0 worker-1 worker-2; do
-  gcloud compute instances describe ${instance} \
-    --format 'value[separator=" "](networkInterfaces[0].networkIP,metadata.items[0].value)'
+for instance in ip-10-240-0-20 ip-10-240-0-21 ip-10-240-0-22; do
+  aws ec2 describe-instances \
+    --filters "Name=tag:Name,Values=${instance}" "Name=instance-state-name,Values=running" | \
+    jq -j '.Reservations[].Instances[].PrivateIpAddress," "'
+
+  INSTANCE_ID=$(aws ec2 describe-instances \
+    --filters "Name=tag:Name,Values=${instance}" | \
+    jq -j '.Reservations[].Instances[].InstanceId')
+
+  aws ec2 describe-instance-attribute \
+    --instance-id ${INSTANCE_ID} \
+    --attribute userData --output text --query "UserData.Value" | \ 
+    base64 --decode && echo "\n"
 done
 ```
 
@@ -32,29 +42,53 @@ done
 Create network routes for each worker instance:
 
 ```
-for i in 0 1 2; do
-  gcloud compute routes create kubernetes-route-10-200-${i}-0-24 \
-    --network kubernetes-the-hard-way \
-    --next-hop-address 10.240.0.2${i} \
-    --destination-range 10.200.${i}.0/24
-done
+ROUTE_TABLE_ID=$(aws ec2 describe-route-tables \
+  --filters "Name=tag:Name,Values=kubernetes" | \
+  jq -r '.RouteTables[].RouteTableId')
+
+WORKER_0_INSTANCE_ID=$(aws ec2 describe-instances \
+  --filters "Name=tag:Name,Values=ip-10-240-0-20" | \
+  jq -j '.Reservations[].Instances[].InstanceId')
+
+aws ec2 create-route \
+  --route-table-id ${ROUTE_TABLE_ID} \
+  --destination-cidr-block 10.200.0.0/24 \
+  --instance-id ${WORKER_0_INSTANCE_ID}
+
+WORKER_1_INSTANCE_ID=$(aws ec2 describe-instances \
+  --filters "Name=tag:Name,Values=ip-10-240-0-21" | \
+  jq -j '.Reservations[].Instances[].InstanceId')
+
+aws ec2 create-route \
+  --route-table-id ${ROUTE_TABLE_ID} \
+  --destination-cidr-block 10.200.1.0/24 \
+  --instance-id ${WORKER_1_INSTANCE_ID}
+
+WORKER_2_INSTANCE_ID=$(aws ec2 describe-instances \
+  --filters "Name=tag:Name,Values=ip-10-240-0-22" | \
+  jq -j '.Reservations[].Instances[].InstanceId')
+
+aws ec2 create-route \
+  --route-table-id ${ROUTE_TABLE_ID} \
+  --destination-cidr-block 10.200.2.0/24 \
+  --instance-id ${WORKER_2_INSTANCE_ID}
 ```
 
 List the routes in the `kubernetes-the-hard-way` VPC network:
 
 ```
-gcloud compute routes list --filter "network: kubernetes-the-hard-way"
+aws ec2 describe-route-tables --route-table-ids ${ROUTE_TABLE_ID} | \ 
+  jq -j '.RouteTables[].Routes[] | .DestinationCidrBlock, " ", .NetworkInterfaceId // .GatewayId, " ", .State, "\n"' 
 ```
 
 > output
 
 ```
-NAME                            NETWORK                  DEST_RANGE     NEXT_HOP                  PRIORITY
-default-route-236a40a8bc992b5b  kubernetes-the-hard-way  0.0.0.0/0      default-internet-gateway  1000
-default-route-df77b1e818a56b30  kubernetes-the-hard-way  10.240.0.0/24                            1000
-kubernetes-route-10-200-0-0-24  kubernetes-the-hard-way  10.200.0.0/24  10.240.0.20               1000
-kubernetes-route-10-200-1-0-24  kubernetes-the-hard-way  10.200.1.0/24  10.240.0.21               1000
-kubernetes-route-10-200-2-0-24  kubernetes-the-hard-way  10.200.2.0/24  10.240.0.22               1000
+10.200.0.0/24 eni-ac25962e active
+10.200.1.0/24 eni-362093b4 active
+10.200.2.0/24 eni-82229100 active
+10.240.0.0/16 local active
+0.0.0.0/0 igw-090e5d71 active
 ```
 
 Next: [Deploying the DNS Cluster Add-on](12-dns-addon.md)
