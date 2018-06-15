@@ -13,7 +13,7 @@ Generate a kubeconfig file suitable for authenticating as the `admin` user:
 ```
 {
   KUBERNETES_PUBLIC_ADDRESS=$(aws elb describe-load-balancers \
-    --load-balancer-name kubernetes | \
+    --load-balancer-name kubernetes-the-hard-way | \
     jq -r '.LoadBalancerDescriptions[].DNSName')
 
   kubectl config set-cluster kubernetes-the-hard-way \

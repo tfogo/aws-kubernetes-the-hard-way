@@ -8,7 +8,7 @@ The commands in this lab must be run on each worker instance: `ip-10-240-0-20`, 
 
 ```
 WORKER_0_PUBLIC_IP_ADDRESS=$(aws ec2 describe-instances \
-  --filters "Name=tag:Name,Values=ip-10-240-0-20" "Name=instance-state-name,Values=running" | \
+  --filters "Name=tag:Name,Values=ip-10-240-0-20" | \
   jq -j '.Reservations[].Instances[].PublicIpAddress')
     
 ssh ubuntu@${WORKER_0_PUBLIC_IP_ADDRESS}
@@ -16,7 +16,7 @@ ssh ubuntu@${WORKER_0_PUBLIC_IP_ADDRESS}
 
 ```
 WORKER_1_PUBLIC_IP_ADDRESS=$(aws ec2 describe-instances \
-  --filters "Name=tag:Name,Values=ip-10-240-0-21" "Name=instance-state-name,Values=running" | \
+  --filters "Name=tag:Name,Values=ip-10-240-0-21" | \
   jq -j '.Reservations[].Instances[].PublicIpAddress')
 
 ssh ubuntu@${WORKER_1_PUBLIC_IP_ADDRESS}
@@ -24,7 +24,7 @@ ssh ubuntu@${WORKER_1_PUBLIC_IP_ADDRESS}
 
 ```
 WORKER_2_PUBLIC_IP_ADDRESS=$(aws ec2 describe-instances \
-  --filters "Name=tag:Name,Values=ip-10-240-0-22" "Name=instance-state-name,Values=running" | \
+  --filters "Name=tag:Name,Values=ip-10-240-0-22" | \
   jq -j '.Reservations[].Instances[].PublicIpAddress')
     
 ssh ubuntu@${WORKER_2_PUBLIC_IP_ADDRESS}

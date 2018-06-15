@@ -8,7 +8,7 @@ The commands in this lab must be run on each controller instance: `ip-10-240-0-1
 
 ```
 CONTROLLER_0_PUBLIC_IP_ADDRESS=$(aws ec2 describe-instances \
-  --filters "Name=tag:Name,Values=ip-10-240-0-10" "Name=instance-state-name,Values=running" | \
+  --filters "Name=tag:Name,Values=ip-10-240-0-10" | \
   jq -j '.Reservations[].Instances[].PublicIpAddress')
     
 ssh ubuntu@${CONTROLLER_0_PUBLIC_IP_ADDRESS}
@@ -16,7 +16,7 @@ ssh ubuntu@${CONTROLLER_0_PUBLIC_IP_ADDRESS}
 
 ```
 CONTROLLER_1_PUBLIC_IP_ADDRESS=$(aws ec2 describe-instances \
-  --filters "Name=tag:Name,Values=ip-10-240-0-11" "Name=instance-state-name,Values=running" | \
+  --filters "Name=tag:Name,Values=ip-10-240-0-11" | \
   jq -j '.Reservations[].Instances[].PublicIpAddress')
 
 ssh ubuntu@${CONTROLLER_1_PUBLIC_IP_ADDRESS}
@@ -24,7 +24,7 @@ ssh ubuntu@${CONTROLLER_1_PUBLIC_IP_ADDRESS}
 
 ```
 CONTROLLER_2_PUBLIC_IP_ADDRESS=$(aws ec2 describe-instances \
-  --filters "Name=tag:Name,Values=ip-10-240-0-12" "Name=instance-state-name,Values=running" | \
+  --filters "Name=tag:Name,Values=ip-10-240-0-12" | \
   jq -j '.Reservations[].Instances[].PublicIpAddress')
     
 ssh ubuntu@${CONTROLLER_2_PUBLIC_IP_ADDRESS}

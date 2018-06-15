@@ -12,7 +12,7 @@ The Kubernetes [networking model](https://kubernetes.io/docs/concepts/cluster-ad
 
 ### Virtual Private Cloud Network
 
-In this section a dedicated [Virtual Private Cloud](https://cloud.google.com/compute/docs/networks-and-firewalls#networks) (VPC) network will be setup to host the Kubernetes cluster.
+In this section a dedicated [Virtual Private Cloud](https://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_Introduction.html) (VPC) network will be setup to host the Kubernetes cluster.
 
 Create the `kubernetes-the-hard-way` custom VPC network:
 
@@ -40,7 +40,7 @@ aws ec2 modify-vpc-attribute \
   --enable-dns-hostnames '{"Value": true}'
 ```
 
-A [subnet](https://cloud.google.com/compute/docs/vpc/#vpc_networks_and_subnets) must be provisioned with an IP address range large enough to assign a private IP address to each node in the Kubernetes cluster.
+A [subnet](https://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_Subnets.html) must be provisioned with an IP address range large enough to assign a private IP address to each node in the Kubernetes cluster.
 
 Create the `kubernetes` subnet in the `kubernetes-the-hard-way` VPC network:
 
@@ -162,20 +162,17 @@ aws ec2 authorize-security-group-ingress \
 List the firewall rules in the `kubernetes-the-hard-way` VPC network:
 
 ```
-aws ec2 describe-security-groups --group-ids=${SECURITY_GROUP_ID}| jq -r '["CIDR", "PORT", "PROTOCOL"], (.SecurityGroups[0].IpPermissions[] | [.IpRanges[].CidrIp, .ToPort, .IpProtocol]) | @tsv'
+aws ec2 describe-security-groups --group-ids=${SECURITY_GROUP_ID} | \ 
+jq -r '(.SecurityGroups[0].IpPermissions[] | [.IpRanges[].CidrIp, .ToPort, .IpProtocol]) | @tsv'
 ```
 
 > output
 
-XXXXXXXXXXXXXXXXX
-XXXXXXXXXXXXXXXXX
-XXXXXXXXXXXXXXXXX
-XXXXXXXXXXXXXXXXX
-
 ```
-NAME                                    NETWORK                  DIRECTION  PRIORITY  ALLOW                 DENY
-kubernetes-the-hard-way-allow-external  kubernetes-the-hard-way  INGRESS    1000      tcp:22,tcp:6443,icmp
-kubernetes-the-hard-way-allow-internal  kubernetes-the-hard-way  INGRESS    1000      tcp,udp,icmp
+0.0.0.0/0       6443    tcp
+10.240.0.0/24           -1
+0.0.0.0/0       22      tcp
+0.0.0.0/0       -1      icmp
 ```
 
 ### Kubernetes Public IP Address
@@ -184,7 +181,7 @@ Allocate a static IP address that will be attached to the external load balancer
 
 ```
 aws elb create-load-balancer \
-  --load-balancer-name kubernetes \
+  --load-balancer-name kubernetes-the-hard-way \
   --listeners "Protocol=TCP,LoadBalancerPort=6443,InstanceProtocol=TCP,InstancePort=6443" \
   --subnets ${SUBNET_ID} \
   --security-groups ${SECURITY_GROUP_ID}
@@ -193,14 +190,15 @@ aws elb create-load-balancer \
 Verify the `kubernetes-the-hard-way` static IP address was created in your default compute region:
 
 ```
-gcloud compute addresses list --filter="name=('kubernetes-the-hard-way')"
+aws elb describe-load-balancers \
+  --load-balancer-name kubernetes-the-hard-way | \
+  jq -r '.LoadBalancerDescriptions[].DNSName'
 ```
 
 > output
 
 ```
-NAME                     REGION    ADDRESS        STATUS
-kubernetes-the-hard-way  us-west1  XX.XXX.XXX.XX  RESERVED
+kubernetes-the-hard-way-804965586.us-west-2.elb.amazonaws.com
 ```
 
 ### Create Instance IAM Policies
@@ -259,7 +257,7 @@ aws iam add-role-to-instance-profile \
 Use the [Ubuntu Amazon EC2 AMI Locator](https://cloud-images.ubuntu.com/locator/ec2/) to find the right image-id for your zone. This guide assumes the `us-west-2` zone.
 
 ```
-IMAGE_ID="ami-a4dc46db"
+IMAGE_ID="ami-04f8bb7c"
 ```
 
 
@@ -298,15 +296,21 @@ CONTROLLER_0_INSTANCE_ID=$(aws ec2 run-instances \
   --private-ip-address 10.240.0.10 \
   --subnet-id ${SUBNET_ID} | \
   jq -r '.Instances[].InstanceId')
+```
 
+```
 aws ec2 modify-instance-attribute \
   --instance-id ${CONTROLLER_0_INSTANCE_ID} \
   --no-source-dest-check
+```
 
+```
 aws ec2 create-tags \
   --resources ${CONTROLLER_0_INSTANCE_ID} \
   --tags Key=Name,Value=ip-10-240-0-10
+```
 
+```
 CONTROLLER_1_INSTANCE_ID=$(aws ec2 run-instances \
   --associate-public-ip-address \
   --iam-instance-profile 'Name=kubernetes' \
@@ -318,15 +322,21 @@ CONTROLLER_1_INSTANCE_ID=$(aws ec2 run-instances \
   --private-ip-address 10.240.0.11 \
   --subnet-id ${SUBNET_ID} | \
   jq -r '.Instances[].InstanceId')
+```
 
+```
 aws ec2 modify-instance-attribute \
   --instance-id ${CONTROLLER_1_INSTANCE_ID} \
   --no-source-dest-check
+```
 
+```
 aws ec2 create-tags \
   --resources ${CONTROLLER_1_INSTANCE_ID} \
   --tags Key=Name,Value=ip-10-240-0-11
+```
 
+```
 CONTROLLER_2_INSTANCE_ID=$(aws ec2 run-instances \
   --associate-public-ip-address \
   --iam-instance-profile 'Name=kubernetes' \
@@ -338,11 +348,15 @@ CONTROLLER_2_INSTANCE_ID=$(aws ec2 run-instances \
   --private-ip-address 10.240.0.12 \
   --subnet-id ${SUBNET_ID} | \
   jq -r '.Instances[].InstanceId')
+```
 
+```
 aws ec2 modify-instance-attribute \
   --instance-id ${CONTROLLER_2_INSTANCE_ID} \
   --no-source-dest-check
+```
 
+```
 aws ec2 create-tags \
   --resources ${CONTROLLER_2_INSTANCE_ID} \
   --tags Key=Name,Value=ip-10-240-0-12
@@ -369,15 +383,21 @@ WORKER_0_INSTANCE_ID=$(aws ec2 run-instances \
   --user-data 10.200.0.0/24 \
   --subnet-id ${SUBNET_ID} | \
   jq -r '.Instances[].InstanceId')
+```
 
+```
 aws ec2 modify-instance-attribute \
   --instance-id ${WORKER_0_INSTANCE_ID} \
   --no-source-dest-check
+```
 
+```
 aws ec2 create-tags \
   --resources ${WORKER_0_INSTANCE_ID} \
   --tags Key=Name,Value=ip-10-240-0-20
+```
 
+```
 WORKER_1_INSTANCE_ID=$(aws ec2 run-instances \
   --associate-public-ip-address \
   --iam-instance-profile 'Name=kubernetes' \
@@ -390,15 +410,21 @@ WORKER_1_INSTANCE_ID=$(aws ec2 run-instances \
   --user-data 10.200.1.0/24 \
   --subnet-id ${SUBNET_ID} | \
   jq -r '.Instances[].InstanceId')
+```
 
+```
 aws ec2 modify-instance-attribute \
   --instance-id ${WORKER_1_INSTANCE_ID} \
   --no-source-dest-check
+```
 
+```
 aws ec2 create-tags \
   --resources ${WORKER_1_INSTANCE_ID} \
   --tags Key=Name,Value=ip-10-240-0-21
+```
 
+```
 WORKER_2_INSTANCE_ID=$(aws ec2 run-instances \
   --associate-public-ip-address \
   --iam-instance-profile 'Name=kubernetes' \
@@ -411,11 +437,15 @@ WORKER_2_INSTANCE_ID=$(aws ec2 run-instances \
   --user-data 10.200.2.0/24 \
   --subnet-id ${SUBNET_ID} | \
   jq -r '.Instances[].InstanceId')
+```
 
+```
 aws ec2 modify-instance-attribute \
   --instance-id ${WORKER_2_INSTANCE_ID} \
   --no-source-dest-check
+```
 
+```
 aws ec2 create-tags \
   --resources ${WORKER_2_INSTANCE_ID} \
   --tags Key=Name,Value=ip-10-240-0-22
@@ -434,12 +464,12 @@ aws ec2 describe-instances \
 > output
 
 ```
-i-ae714f73  us-west-2c  10.240.0.11  XX.XX.XX.XXX
-i-f4714f29  us-west-2c  10.240.0.21  XX.XX.XXX.XXX
-i-f6714f2b  us-west-2c  10.240.0.12  XX.XX.XX.XX
-i-e26e503f  us-west-2c  10.240.0.22  XX.XX.XXX.XXX
-i-e8714f35  us-west-2c  10.240.0.10  XX.XX.XXX.XXX
-i-78704ea5  us-west-2c  10.240.0.20  XX.XX.XXX.XXX
+i-0378673d23a0f85d1  us-west-2b  10.240.0.20  XX.XXX.XX.XXX
+i-07e72695e8b10b470  us-west-2b  10.240.0.11  XX.XXX.XX.XXX
+i-0403631bc22541d0b  us-west-2b  10.240.0.22  XX.XXX.XX.XXX
+i-03b91b46203ecdcec  us-west-2b  10.240.0.10  XX.XXX.XX.XXX
+i-0de274d9230c236ad  us-west-2b  10.240.0.21  XX.XXX.XX.XXX
+i-06b52e9f1d38d3d42  us-west-2b  10.240.0.12  XX.XXX.XX.XXX
 ```
 
 ## Configuring SSH Access
@@ -448,7 +478,7 @@ SSH will be used to configure the controller and worker instances. Once the virt
 
 ```
 WORKER_0_PUBLIC_IP_ADDRESS=$(aws ec2 describe-instances \
-    --filters "Name=tag:Name,Values=worker0" | \
+    --filters "Name=tag:Name,Values=ip-10-240-0-20" | \
     jq -j '.Reservations[].Instances[].PublicIpAddress')
 ```
 
@@ -458,20 +488,20 @@ WORKER_0_PUBLIC_IP_ADDRESS=$(aws ec2 describe-instances \
 ssh ubuntu@${WORKER_0_PUBLIC_IP_ADDRESS}
 ```
 
-You'll then be logged into the `worker-0` instance:
+You'll then be logged into the `ip-10-240-0-20` instance:
 
 ```
-Welcome to Ubuntu 18.04 LTS (GNU/Linux 4.15.0-1006-gcp x86_64)
+Welcome to Ubuntu 18.04 LTS (GNU/Linux 4.15.0-1010-aws x86_64)
 
 ...
 
 Last login: Sun May 13 14:34:27 2018 from XX.XXX.XXX.XX
 ```
 
-Type `exit` at the prompt to exit the `worker-0` compute instance:
+Type `exit` at the prompt to exit the `ip-10-240-0-20` compute instance:
 
 ```
-ubuntu@worker-0:~$ exit
+ubuntu@ip-10-240-0-20:~$ exit
 ```
 > output
 

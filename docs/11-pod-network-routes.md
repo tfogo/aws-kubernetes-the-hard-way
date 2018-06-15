@@ -15,7 +15,7 @@ Print the internal IP address and Pod CIDR range for each worker instance:
 ```
 for instance in ip-10-240-0-20 ip-10-240-0-21 ip-10-240-0-22; do
   aws ec2 describe-instances \
-    --filters "Name=tag:Name,Values=${instance}" "Name=instance-state-name,Values=running" | \
+    --filters "Name=tag:Name,Values=${instance}" | \
     jq -j '.Reservations[].Instances[].PrivateIpAddress," "'
 
   INSTANCE_ID=$(aws ec2 describe-instances \
@@ -24,8 +24,8 @@ for instance in ip-10-240-0-20 ip-10-240-0-21 ip-10-240-0-22; do
 
   aws ec2 describe-instance-attribute \
     --instance-id ${INSTANCE_ID} \
-    --attribute userData --output text --query "UserData.Value" | \ 
-    base64 --decode && echo "\n"
+    --attribute userData --output text --query "UserData.Value" | \
+    base64 --decode && echo ""
 done
 ```
 
@@ -77,7 +77,7 @@ aws ec2 create-route \
 List the routes in the `kubernetes-the-hard-way` VPC network:
 
 ```
-aws ec2 describe-route-tables --route-table-ids ${ROUTE_TABLE_ID} | \ 
+aws ec2 describe-route-tables --route-table-ids ${ROUTE_TABLE_ID} | \
   jq -j '.RouteTables[].Routes[] | .DestinationCidrBlock, " ", .NetworkInterfaceId // .GatewayId, " ", .State, "\n"' 
 ```
 

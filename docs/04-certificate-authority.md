@@ -302,7 +302,7 @@ Generate the Kubernetes API Server certificate and private key:
 {
 
 KUBERNETES_PUBLIC_ADDRESS=$(aws elb describe-load-balancers \
-  --load-balancer-name kubernetes | \
+  --load-balancer-name kubernetes-the-hard-way | \
   jq -r '.LoadBalancerDescriptions[].DNSName')
 
 cat > kubernetes-csr.json <<EOF

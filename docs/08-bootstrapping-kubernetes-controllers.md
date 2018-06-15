@@ -8,7 +8,7 @@ The commands in this lab must be run on each controller instance: `ip-10-240-0-1
 
 ```
 CONTROLLER_0_PUBLIC_IP_ADDRESS=$(aws ec2 describe-instances \
-  --filters "Name=tag:Name,Values=ip-10-240-0-10" "Name=instance-state-name,Values=running" | \
+  --filters "Name=tag:Name,Values=ip-10-240-0-10" | \
   jq -j '.Reservations[].Instances[].PublicIpAddress')
     
 ssh ubuntu@${CONTROLLER_0_PUBLIC_IP_ADDRESS}
@@ -16,7 +16,7 @@ ssh ubuntu@${CONTROLLER_0_PUBLIC_IP_ADDRESS}
 
 ```
 CONTROLLER_1_PUBLIC_IP_ADDRESS=$(aws ec2 describe-instances \
-  --filters "Name=tag:Name,Values=ip-10-240-0-11" "Name=instance-state-name,Values=running" | \
+  --filters "Name=tag:Name,Values=ip-10-240-0-11" | \
   jq -j '.Reservations[].Instances[].PublicIpAddress')
 
 ssh ubuntu@${CONTROLLER_1_PUBLIC_IP_ADDRESS}
@@ -24,7 +24,7 @@ ssh ubuntu@${CONTROLLER_1_PUBLIC_IP_ADDRESS}
 
 ```
 CONTROLLER_2_PUBLIC_IP_ADDRESS=$(aws ec2 describe-instances \
-  --filters "Name=tag:Name,Values=ip-10-240-0-12" "Name=instance-state-name,Values=running" | \
+  --filters "Name=tag:Name,Values=ip-10-240-0-12" | \
   jq -j '.Reservations[].Instances[].PublicIpAddress')
     
 ssh ubuntu@${CONTROLLER_2_PUBLIC_IP_ADDRESS}
@@ -241,16 +241,17 @@ etcd-1               Healthy   {"health": "true"}
 Test the health check:
 
 ```
-curl --cacert /var/lib/kubernetes/ca.pem -i https://127.0.0.1:6443/healthz
+curl --cacert /var/lib/kubernetes/ca.pem \
+  --key /var/lib/kubernetes/kubernetes-k.pem \
+  --cert /var/lib/kubernetes/kubernetes.pem \
+  -i https://127.0.0.1:6443/healthz
 ```
 
 ```
-HTTP/1.1 200 OK
-Server: nginx/1.14.0 (Ubuntu)
-Date: Mon, 14 May 2018 13:45:39 GMT
-Content-Type: text/plain; charset=utf-8
-Content-Length: 2
-Connection: keep-alive
+HTTP/2 200
+content-type: text/plain; charset=utf-8
+content-length: 2
+date: Fri, 15 Jun 2018 23:00:23 GMT
 
 ok
 ```
@@ -265,7 +266,7 @@ In this section you will configure RBAC permissions to allow the Kubernetes API 
 
 ```
 CONTROLLER_0_PUBLIC_IP_ADDRESS=$(aws ec2 describe-instances \
-  --filters "Name=tag:Name,Values=ip-10-240-0-10" "Name=instance-state-name,Values=running" | \
+  --filters "Name=tag:Name,Values=ip-10-240-0-10" | \
   jq -j '.Reservations[].Instances[].PublicIpAddress')
 
 ssh ubuntu@${CONTROLLER_0_PUBLIC_IP_ADDRESS}
@@ -332,7 +333,7 @@ Create the external load balancer network resources:
 
 ```
 aws elb register-instances-with-load-balancer \
-  --load-balancer-name kubernetes \
+  --load-balancer-name kubernetes-the-hard-way \
   --instances ${CONTROLLER_0_INSTANCE_ID} ${CONTROLLER_1_INSTANCE_ID} ${CONTROLLER_2_INSTANCE_ID}
 ```
 
@@ -358,7 +359,7 @@ Retrieve the `kubernetes-the-hard-way` static IP address:
 
 ```
 KUBERNETES_PUBLIC_ADDRESS=$(aws elb describe-load-balancers \
-  --load-balancer-name kubernetes | \
+  --load-balancer-name kubernetes-the-hard-way | \
   jq -r '.LoadBalancerDescriptions[].DNSName')
 ```
 

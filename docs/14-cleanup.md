@@ -5,10 +5,6 @@ In this lab you will delete the compute resources created during this tutorial.
 ## Virtual Machines
 
 ```
-KUBERNETES_HOSTS=(controller0 controller1 controller2 etcd0 etcd1 etcd2 worker0 worker1 worker2)
-```
-
-```
 for instance in ip-10-240-0-10 ip-10-240-0-11 ip-10-240-0-12 ip-10-240-0-20 ip-10-240-0-21 ip-10-240-0-22; do
   INSTANCE_ID=$(aws ec2 describe-instances \
     --filters "Name=tag:Name,Values=${instance}" | \
@@ -61,14 +57,14 @@ Network resources cannot be deleted while VMs hold a reference to them.
 
 ```
 aws elb delete-load-balancer \
-  --load-balancer-name kubernetes
+  --load-balancer-name kubernetes-the-hard-way
 ```
 
 ### Internet Gateways
 
 ```
 VPC_ID=$(aws ec2 describe-vpcs \
-  --filters "Name=tag:Name,Values=kubernetes" | \
+  --filters "Name=tag:Name,Values=kubernetes-the-hard-way" | \
   jq -r '.Vpcs[].VpcId')
 ```
 
@@ -130,7 +126,7 @@ aws ec2 delete-route-table --route-table-id ${ROUTE_TABLE_ID}
 
 ```
 VPC_ID=$(aws ec2 describe-vpcs \
-  --filters "Name=tag:Name,Values=kubernetes" | \
+  --filters "Name=tag:Name,Values=kubernetes-the-hard-way" | \
   jq -r '.Vpcs[].VpcId')
 ```
 
