@@ -35,8 +35,12 @@ EOF
 Copy the `encryption-config.yaml` encryption config file to each controller instance:
 
 ```
-for instance in controller-0 controller-1 controller-2; do
-  gcloud compute scp encryption-config.yaml ${instance}:~/
+for instance in ip-10-240-0-10 ip-10-240-0-11 ip-10-240-0-12; do
+  PUBLIC_IP_ADDRESS=$(aws ec2 describe-instances \
+    --filters "Name=tag:Name,Values=${instance}" | \
+    jq -j '.Reservations[].Instances[].PublicIpAddress')
+
+  scp encryption-config.yaml ubuntu@${PUBLIC_IP_ADDRESS}:~/
 done
 ```
 

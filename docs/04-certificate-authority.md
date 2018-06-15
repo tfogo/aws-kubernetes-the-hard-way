@@ -112,7 +112,7 @@ Kubernetes uses a [special-purpose authorization mode](https://kubernetes.io/doc
 Generate a certificate and private key for each Kubernetes worker node:
 
 ```
-for instance in worker-0 worker-1 worker-2; do
+for instance in ip-10-240-0-20 ip-10-240-0-21 ip-10-240-22; do
 cat > ${instance}-csr.json <<EOF
 {
   "CN": "system:node:${instance}",
@@ -132,11 +132,13 @@ cat > ${instance}-csr.json <<EOF
 }
 EOF
 
-EXTERNAL_IP=$(gcloud compute instances describe ${instance} \
-  --format 'value(networkInterfaces[0].accessConfigs[0].natIP)')
-
-INTERNAL_IP=$(gcloud compute instances describe ${instance} \
-  --format 'value(networkInterfaces[0].networkIP)')
+EXTERNAL_IP=$(aws ec2 describe-instances \
+  --filters "Name=tag:Name,Values=${instance}" | \
+  jq -j '.Reservations[].Instances[].PublicIpAddress')
+  
+INTERNAL_IP=$(aws ec2 describe-instances \
+  --filters "Name=tag:Name,Values=${instance}" | \
+  jq -j '.Reservations[].Instances[].PrivateIpAddress')
 
 cfssl gencert \
   -ca=ca.pem \
@@ -151,12 +153,12 @@ done
 Results:
 
 ```
-worker-0-key.pem
-worker-0.pem
-worker-1-key.pem
-worker-1.pem
-worker-2-key.pem
-worker-2.pem
+ip-10-240-0-10-key.pem
+ip-10-240-0-10.pem
+ip-10-240-0-11-key.pem
+ip-10-240-0-11.pem
+ip-10-240-12-key.pem
+ip-10-240-12.pem
 ```
 
 ### The Controller Manager Client Certificate
@@ -299,9 +301,9 @@ Generate the Kubernetes API Server certificate and private key:
 ```
 {
 
-KUBERNETES_PUBLIC_ADDRESS=$(gcloud compute addresses describe kubernetes-the-hard-way \
-  --region $(gcloud config get-value compute/region) \
-  --format 'value(address)')
+KUBERNETES_PUBLIC_ADDRESS=$(aws elb describe-load-balancers \
+  --load-balancer-name kubernetes | \
+  jq -r '.LoadBalancerDescriptions[].DNSName')
 
 cat > kubernetes-csr.json <<EOF
 {
@@ -391,17 +393,25 @@ service-account.pem
 Copy the appropriate certificates and private keys to each worker instance:
 
 ```
-for instance in worker-0 worker-1 worker-2; do
-  gcloud compute scp ca.pem ${instance}-key.pem ${instance}.pem ${instance}:~/
+for instance in ip-10-240-0-20 ip-10-240-0-21 ip-10-240-22; do
+  PUBLIC_IP_ADDRESS=$(aws ec2 describe-instances \
+    --filters "Name=tag:Name,Values=${instance}" | \
+    jq -j '.Reservations[].Instances[].PublicIpAddress')
+
+  scp ca.pem ${instance}-key.pem ${instance}.pem ubuntu@${PUBLIC_IP_ADDRESS}:~/
 done
 ```
 
 Copy the appropriate certificates and private keys to each controller instance:
 
 ```
-for instance in controller-0 controller-1 controller-2; do
-  gcloud compute scp ca.pem ca-key.pem kubernetes-key.pem kubernetes.pem \
-    service-account-key.pem service-account.pem ${instance}:~/
+for instance in ip-10-240-0-10 ip-10-240-0-11 ip-10-240-12; do
+  PUBLIC_IP_ADDRESS=$(aws ec2 describe-instances \
+    --filters "Name=tag:Name,Values=${instance}" | \
+    jq -j '.Reservations[].Instances[].PublicIpAddress')
+
+  scp ca.pem ca-key.pem kubernetes-key.pem kubernetes.pem \
+    service-account-key.pem service-account.pem ubuntu@${PUBLIC_IP_ADDRESS}:~/
 done
 ```
 

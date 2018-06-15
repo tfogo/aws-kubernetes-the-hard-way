@@ -305,7 +305,7 @@ aws ec2 modify-instance-attribute \
 
 aws ec2 create-tags \
   --resources ${CONTROLLER_0_INSTANCE_ID} \
-  --tags Key=Name,Value=controller0
+  --tags Key=Name,Value=ip-10-240-0-10
 
 CONTROLLER_1_INSTANCE_ID=$(aws ec2 run-instances \
   --associate-public-ip-address \
@@ -325,7 +325,7 @@ aws ec2 modify-instance-attribute \
 
 aws ec2 create-tags \
   --resources ${CONTROLLER_1_INSTANCE_ID} \
-  --tags Key=Name,Value=controller1
+  --tags Key=Name,Value=ip-10-240-0-11
 
 CONTROLLER_2_INSTANCE_ID=$(aws ec2 run-instances \
   --associate-public-ip-address \
@@ -345,7 +345,7 @@ aws ec2 modify-instance-attribute \
 
 aws ec2 create-tags \
   --resources ${CONTROLLER_2_INSTANCE_ID} \
-  --tags Key=Name,Value=controller2
+  --tags Key=Name,Value=ip-10-240-0-12
 ``` 
 
 ### Kubernetes Workers
@@ -375,7 +375,7 @@ aws ec2 modify-instance-attribute \
 
 aws ec2 create-tags \
   --resources ${WORKER_0_INSTANCE_ID} \
-  --tags Key=Name,Value=worker0
+  --tags Key=Name,Value=ip-10-240-0-20
 
 WORKER_1_INSTANCE_ID=$(aws ec2 run-instances \
   --associate-public-ip-address \
@@ -395,7 +395,7 @@ aws ec2 modify-instance-attribute \
 
 aws ec2 create-tags \
   --resources ${WORKER_1_INSTANCE_ID} \
-  --tags Key=Name,Value=worker1
+  --tags Key=Name,Value=ip-10-240-0-21
 
 WORKER_2_INSTANCE_ID=$(aws ec2 run-instances \
   --associate-public-ip-address \
@@ -415,7 +415,7 @@ aws ec2 modify-instance-attribute \
 
 aws ec2 create-tags \
   --resources ${WORKER_2_INSTANCE_ID} \
-  --tags Key=Name,Value=worker2
+  --tags Key=Name,Value=ip-10-240-0-22
 ```
 
 ### Verification

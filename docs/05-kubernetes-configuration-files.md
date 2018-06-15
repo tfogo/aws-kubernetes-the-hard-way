@@ -13,9 +13,9 @@ Each kubeconfig requires a Kubernetes API Server to connect to. To support high 
 Retrieve the `kubernetes-the-hard-way` static IP address:
 
 ```
-KUBERNETES_PUBLIC_ADDRESS=$(gcloud compute addresses describe kubernetes-the-hard-way \
-  --region $(gcloud config get-value compute/region) \
-  --format 'value(address)')
+KUBERNETES_PUBLIC_ADDRESS=$(aws elb describe-load-balancers \
+  --load-balancer-name kubernetes | \
+  jq -r '.LoadBalancerDescriptions[].DNSName')
 ```
 
 ### The kubelet Kubernetes Configuration File
@@ -25,7 +25,7 @@ When generating kubeconfig files for Kubelets the client certificate matching th
 Generate a kubeconfig file for each worker node:
 
 ```
-for instance in worker-0 worker-1 worker-2; do
+for instance in ip-10-240-0-20 ip-10-240-0-21 ip-10-240-0-22; do
   kubectl config set-cluster kubernetes-the-hard-way \
     --certificate-authority=ca.pem \
     --embed-certs=true \
@@ -50,9 +50,9 @@ done
 Results:
 
 ```
-worker-0.kubeconfig
-worker-1.kubeconfig
-worker-2.kubeconfig
+ip-10-240-0-20.kubeconfig
+ip-10-240-0-21.kubeconfig
+ip-10-240-0-22.kubeconfig
 ```
 
 ### The kube-proxy Kubernetes Configuration File
@@ -196,16 +196,24 @@ admin.kubeconfig
 Copy the appropriate `kubelet` and `kube-proxy` kubeconfig files to each worker instance:
 
 ```
-for instance in worker-0 worker-1 worker-2; do
-  gcloud compute scp ${instance}.kubeconfig kube-proxy.kubeconfig ${instance}:~/
+for instance in ip-10-240-0-20 ip-10-240-0-21 ip-10-240-0-22; do
+  PUBLIC_IP_ADDRESS=$(aws ec2 describe-instances \
+    --filters "Name=tag:Name,Values=${instance}" | \
+    jq -j '.Reservations[].Instances[].PublicIpAddress')
+
+  scp ${instance}.kubeconfig kube-proxy.kubeconfig ubuntu@${PUBLIC_IP_ADDRESS}:~/
 done
 ```
 
 Copy the appropriate `kube-controller-manager` and `kube-scheduler` kubeconfig files to each controller instance:
 
 ```
-for instance in controller-0 controller-1 controller-2; do
-  gcloud compute scp admin.kubeconfig kube-controller-manager.kubeconfig kube-scheduler.kubeconfig ${instance}:~/
+for instance in ip-10-240-0-10 ip-10-240-0-11 ip-10-240-0-12; do
+  PUBLIC_IP_ADDRESS=$(aws ec2 describe-instances \
+    --filters "Name=tag:Name,Values=${instance}" | \
+    jq -j '.Reservations[].Instances[].PublicIpAddress')
+
+  scp admin.kubeconfig kube-controller-manager.kubeconfig kube-scheduler.kubeconfig ubuntu@${PUBLIC_IP_ADDRESS}:~/
 done
 ```
 
