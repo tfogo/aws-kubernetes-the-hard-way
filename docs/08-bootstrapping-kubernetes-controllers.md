@@ -242,7 +242,7 @@ Test the health check:
 
 ```
 curl --cacert /var/lib/kubernetes/ca.pem \
-  --key /var/lib/kubernetes/kubernetes-k.pem \
+  --key /var/lib/kubernetes/kubernetes-key.pem \
   --cert /var/lib/kubernetes/kubernetes.pem \
   -i https://127.0.0.1:6443/healthz
 ```
